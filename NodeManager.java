@@ -18,6 +18,14 @@ public class NodeManager {
         }
     }
 
+    public int getNodeSize(JPanel gridPanel) {
+        Dimension size = gridPanel.getSize();
+        int numRows = nodes.length;
+        int numCols = nodes[0].length;
+        int nodeSize = Math.min(size.width / numCols, size.height / numRows);
+        return nodeSize;
+    }
+
     public JPanel getNode(int row, int col) {
         return nodes[row][col];
     }

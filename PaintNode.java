@@ -1,22 +1,17 @@
 package Package1;
-import java.awt.Color;
-import java.awt.Graphics;
-import javax.swing.JComponent;
 
-class PaintNode extends JComponent {
-    private Color color;
-    private int thickness;
+import javax.swing.*;
+import java.awt.*;
 
-    public PaintNode(Color color, int thickness) {
-        this.color = color;
-        this.thickness = thickness;
+class PaintNode extends JPanel {
+    public PaintNode() {
+        setPreferredSize(new Dimension(50, 50)); // Set the size of the node
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.setColor(color);
-        g.fillRect(0, 0, getWidth(), getHeight());
-        g.setColor(getBackground());
-        g.fillRect(thickness, thickness, getWidth() - 2 * thickness, getHeight() - 2 * thickness);
+        g.setColor(getBackground()); // Set the color of the node to its current background color
+        g.fillRect(0, 0, getWidth(), getHeight()); // Paint the node
     }
 }

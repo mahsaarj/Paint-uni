@@ -76,9 +76,6 @@ class Playground extends JFrame {
                     // Update color of new node
                     updateNodeColor(newNode, Color.RED);
 
-                    // Update border color of nodes in border
-                    updateNodesInBorderColor(newNode, Color.BLUE);
-
                     // Repaint nodes
                     currentNode.repaint();
                     newNode.repaint();
@@ -117,9 +114,6 @@ class Playground extends JFrame {
 
                         // Update color of new node
                         updateNodeColor(newNode, Color.RED);
-
-                        // Update border color of nodes in border
-                        updateNodesInBorderColor(newNode, Color.BLUE);
 
                         // Repaint nodes
                         currentNode.repaint();
@@ -180,52 +174,71 @@ class Playground extends JFrame {
             // Update color of new node
             updateNodeColor(newNode, Color.RED);
 
-            // Update border color of nodes in border
-            updateNodesInBorderColor(newNode, Color.BLUE);
-
             // Repaint nodes
             currentNode.repaint();
             newNode.repaint();
         }
     }
 
-    private RectangleShape getRectangle(JPanel node) {
-        for (Component c : node.getComponents()) {
-            if (c instanceof RectangleShape) {
-                return (RectangleShape) c;
+    private void updateNodeColor(JPanel node, Color green) {
+        boolean containsRectangle = false;
+        for (Component component : node.getComponents()) {
+            if (component instanceof RectangleShape) {
+                containsRectangle = true;
+                break;
             }
         }
-        return null;
-    }
-
-    private void updateNodeColor(JPanel node, Color color) {
-        for (Component c : node.getComponents()) {
-            if (c instanceof Shape) {
-                Graphics2D g2d = (Graphics2D) c.getGraphics();
-                g2d.setColor(Color.GREEN);
-                g2d.fill((Shape) c);
-            }
+        if (containsRectangle) {
+            node.setBackground(Color.GREEN);
+        } else {
+            node.setBackground(Color.lightGray);
         }
     }
 
     private void updateNodesInBorderColor(JPanel node, Color color) {
-        int row = nodeManager.getRow(node);
-        int col = nodeManager.getColumn(node);
-        List<JPanel> borderNodes = new ArrayList<>();
-        if (row > 0) {
-            borderNodes.add(nodeManager.getNode(row - 1, col));
+        List<Point> nodesInBorder = getNodesInBorder();
+        for (Point nodePos : nodesInBorder) {
+            JPanel borderNode = nodeManager.getNode(nodePos.x, nodePos.y);
+            if (!borderNode.equals(node)) {
+                updateNodeColor(borderNode, color);
+            }
         }
-        if (row < 24) {
-            borderNodes.add(nodeManager.getNode(row + 1, col));
+    }
+
+    private List<Point> getNodesInBorder() {
+        List<Point> nodesInBorder = new ArrayList<>();
+        int startRow = currentRow - 1;
+        int startCol = currentCol - 1;
+        int endRow = currentRow + 1;
+        int endCol = currentCol + 1;
+        if (startRow < 0) {
+            startRow = 0;
         }
-        if (col > 0) {
-            borderNodes.add(nodeManager.getNode(row, col - 1));
+        if (startCol < 0) {
+            startCol = 0;
         }
-        if (col < 24) {
-            borderNodes.add(nodeManager.getNode(row, col + 1));
+        if (endRow > 24) {
+            endRow = 24;
         }
-        for (JPanel borderNode : borderNodes) {
-            updateNodeColor(borderNode, color);
+        if (endCol > 24) {
+            endCol = 24;
         }
+        for (int row = startRow; row <= endRow; row++) {
+            for (int col = startCol; col <= endCol; col++) {
+                if (row != currentRow || col != currentCol) {
+                    nodesInBorder.add(new Point(row, col));
+                }
+            }
+        }
+        return nodesInBorder;
+    }
+
+    private RectangleShape getRectangle(JPanel node) {
+        for (Component comp : node.getComponents()) {
+            if (comp instanceof RectangleShape) {
+                return (RectangleShape) comp;
+            }
+        }
+        return null;
     }
 }

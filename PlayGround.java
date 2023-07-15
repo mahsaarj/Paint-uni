@@ -6,10 +6,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
 
-class Playground extends JFrame {
+public class Playground extends JFrame {
     private NodeManager nodeManager;
     private JPanel gridPanel;
     private int currentRow;
@@ -86,6 +84,8 @@ class Playground extends JFrame {
             @Override
             public void mouseReleased(MouseEvent e) {
                 dragging = false;
+                // Color the nodes inside the border shape with the fill color
+                colorNodesInsideBorder(nodeManager.getNode(currentRow, currentCol), Color.BLUE);
             }
         });
 
@@ -159,6 +159,7 @@ class Playground extends JFrame {
 
         // Check if new row and column are within bounds
         if (newRow >= 0 && newRow < 25 && newCol >= 0 && newCol < 25) {
+// Get current node and new node
             JPanel currentNode = nodeManager.getNode(currentRow, currentCol);
             JPanel newNode = nodeManager.getNode(newRow, newCol);
 
@@ -180,59 +181,6 @@ class Playground extends JFrame {
         }
     }
 
-    private void updateNodeColor(JPanel node, Color green) {
-        boolean containsRectangle = false;
-        for (Component component : node.getComponents()) {
-            if (component instanceof RectangleShape) {
-                containsRectangle = true;
-                break;
-            }
-        }
-        if (containsRectangle) {
-            node.setBackground(Color.GREEN);
-        } else {
-            node.setBackground(Color.lightGray);
-        }
-    }
-
-    private void updateNodesInBorderColor(JPanel node, Color color) {
-        List<Point> nodesInBorder = getNodesInBorder();
-        for (Point nodePos : nodesInBorder) {
-            JPanel borderNode = nodeManager.getNode(nodePos.x, nodePos.y);
-            if (!borderNode.equals(node)) {
-                updateNodeColor(borderNode, color);
-            }
-        }
-    }
-
-    private List<Point> getNodesInBorder() {
-        List<Point> nodesInBorder = new ArrayList<>();
-        int startRow = currentRow - 1;
-        int startCol = currentCol - 1;
-        int endRow = currentRow + 1;
-        int endCol = currentCol + 1;
-        if (startRow < 0) {
-            startRow = 0;
-        }
-        if (startCol < 0) {
-            startCol = 0;
-        }
-        if (endRow > 24) {
-            endRow = 24;
-        }
-        if (endCol > 24) {
-            endCol = 24;
-        }
-        for (int row = startRow; row <= endRow; row++) {
-            for (int col = startCol; col <= endCol; col++) {
-                if (row != currentRow || col != currentCol) {
-                    nodesInBorder.add(new Point(row, col));
-                }
-            }
-        }
-        return nodesInBorder;
-    }
-
     private RectangleShape getRectangle(JPanel node) {
         for (Component comp : node.getComponents()) {
             if (comp instanceof RectangleShape) {
@@ -240,5 +188,42 @@ class Playground extends JFrame {
             }
         }
         return null;
+    }
+
+    private void updateNodeColor(JPanel node, Color color) {
+        for (Component comp : node.getComponents()) {
+            if (comp instanceof PaintNode) {
+                ((PaintNode) comp).Paint(color);
+            }
+        }
+    }
+
+    private void colorNodesInsideBorder(JPanel startNode, Color fillColor) {
+        // Get the coordinates of the starting node
+        int startX = nodeManager.getRow(startNode);
+        int startY = nodeManager.getCol(startNode);
+
+        // Get the color of the starting node
+        Color startColor = startNode.getBackground();
+
+        // Call the recursive flood fill method
+        floodFill(startX, startY, startColor, fillColor);
+    }
+
+    private void floodFill(int row, int col, Color startColor, Color fillColor) {
+        // Get the node at the current position
+        JPanel node = nodeManager.getNode(row, col);
+
+        // Check if the node is within the grid and has the starting color
+        if (node != null && node.getBackground().equals(startColor)) {
+            // Set the color of the node to the fill color
+            node.setBackground(fillColor);
+
+            // Recursively call the floodFill method on the adjacent nodes
+            floodFill(row - 1, col, startColor, fillColor); // Up
+            floodFill(row + 1, col, startColor, fillColor); // Down
+            floodFill(row, col - 1, startColor, fillColor); // Left
+            floodFill(row, col + 1, startColor, fillColor); // Right
+        }
     }
 }

@@ -6,8 +6,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
-public class Playground extends JFrame {
+class Playground extends JFrame {
     private NodeManager nodeManager;
     private JPanel gridPanel;
     private int currentRow;
@@ -83,9 +86,14 @@ public class Playground extends JFrame {
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                dragging = false;
-                // Color the nodes inside the border shape with the fill color
-                colorNodesInsideBorder(nodeManager.getNode(currentRow, currentCol), Color.BLUE);
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    JPanel currentNode = nodeManager.getNode(currentRow, currentCol);
+                    if (nodeManager.coloredNodes[currentRow][currentCol]) {
+                        currentNode.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                        colorNodesInsideBorder();
+                        updateNodesInBorderColor(currentNode, Color.RED); // Update color of nodes inside border
+                    }
+                }
             }
         });
 
@@ -159,7 +167,6 @@ public class Playground extends JFrame {
 
         // Check if new row and column are within bounds
         if (newRow >= 0 && newRow < 25 && newCol >= 0 && newCol < 25) {
-// Get current node and new node
             JPanel currentNode = nodeManager.getNode(currentRow, currentCol);
             JPanel newNode = nodeManager.getNode(newRow, newCol);
 
@@ -181,6 +188,59 @@ public class Playground extends JFrame {
         }
     }
 
+    private void updateNodeColor(JPanel node, Color green) {
+        boolean containsRectangle = false;
+        for (Component component : node.getComponents()) {
+            if (component instanceof RectangleShape) {
+                containsRectangle = true;
+                break;
+            }
+        }
+        if (containsRectangle) {
+            node.setBackground(Color.GREEN);
+        } else {
+            node.setBackground(Color.lightGray);
+        }
+    }
+
+    private void updateNodesInBorderColor(JPanel node, Color color) {
+        List<Point> nodesInBorder = getNodesInBorder();
+        for (Point nodePos : nodesInBorder) {
+            JPanel borderNode = nodeManager.getNode(nodePos.x, nodePos.y);
+            if (!borderNode.equals(node)) {
+                updateNodeColor(borderNode, color);
+            }
+        }
+    }
+
+    private List<Point> getNodesInBorder() {
+        List<Point> nodesInBorder = new ArrayList<>();
+        int startRow = currentRow - 1;
+        int startCol = currentCol - 1;
+        int endRow = currentRow + 1;
+        int endCol = currentCol + 1;
+        if (startRow < 0) {
+            startRow = 0;
+        }
+        if (startCol < 0) {
+            startCol = 0;
+        }
+        if (endRow > 24) {
+            endRow = 24;
+        }
+        if (endCol > 24) {
+            endCol = 24;
+        }
+        for (int row = startRow; row <= endRow; row++) {
+            for (int col = startCol; col <= endCol; col++) {
+                if (row != currentRow || col != currentCol) {
+                    nodesInBorder.add(new Point(row, col));
+                }
+            }
+        }
+        return nodesInBorder;
+    }
+
     private RectangleShape getRectangle(JPanel node) {
         for (Component comp : node.getComponents()) {
             if (comp instanceof RectangleShape) {
@@ -190,24 +250,68 @@ public class Playground extends JFrame {
         return null;
     }
 
-    private void updateNodeColor(JPanel node, Color color) {
-        for (Component comp : node.getComponents()) {
-            if (comp instanceof PaintNode) {
-                ((PaintNode) comp).Paint(color);
+    public void colorNodesInsideBorder() {
+        // Find the starting node of the closed shape
+        JPanel startNode = null;
+        for (int i = 0; i < 25; i++) {
+            for (int j = 0; j < 25; j++) {
+                if (nodeManager.coloredNodes[i][j]) {
+                    startNode = nodeManager.getNode(i, j);
+                    break;
+                }
+            }
+            if (startNode != null) {
+                break;
             }
         }
-    }
 
-    private void colorNodesInsideBorder(JPanel startNode, Color fillColor) {
-        // Get the coordinates of the starting node
-        int startX = nodeManager.getRow(startNode);
-        int startY = nodeManager.getCol(startNode);
+        if (startNode == null) {
+            return;
+        }
 
-        // Get the color of the starting node
-        Color startColor = startNode.getBackground();
+        // Find the nodes inside the closed shape
+        List<JPanel> nodesInsideBorder = new ArrayList<>();
+        Stack<JPanel> stack = new Stack<>();
+        stack.push(startNode);
+        while (!stack.empty()) {
+            JPanel node = stack.pop();
+            nodesInsideBorder.add(node);
 
-        // Call the recursive flood fill method
-        floodFill(startX, startY, startColor, fillColor);
+            int row = nodeManager.getRow(node);
+            int col = nodeManager.getCol(node);
+
+            // Check north neighbor
+            if (row > 0 && nodeManager.coloredNodes[row-1][col] && !nodesInsideBorder.contains(nodeManager.getNode(row-1, col))) {
+                stack.push(nodeManager.getNode(row-1, col));
+            }
+
+            // Check south neighbor
+            if (row < 24 && nodeManager.coloredNodes[row+1][col] && !nodesInsideBorder.contains(nodeManager.getNode(row+1, col))) {
+                stack.push(nodeManager.getNode(row+1, col));
+            }
+
+            // Check west neighbor
+            if (col > 0 && nodeManager.coloredNodes[row][col-1] && !nodesInsideBorder.contains(nodeManager.getNode(row, col-1))) {
+                stack.push(nodeManager.getNode(row, col-1));
+            }
+
+            // Check east neighbor
+            if (col < 24 && nodeManager.coloredNodes[row][col+1] && !nodesInsideBorder.contains(nodeManager.getNode(row, col+1))) {
+                stack.push(nodeManager.getNode(row, col+1));
+            }
+        }
+
+        // Color the nodes inside the closed shape
+        for (int i = 0; i < 25; i++) {
+            for (int j = 0; j < 25; j++) {
+                JPanel node = nodeManager.getNode(i, j);
+                if (node != null && nodesInsideBorder.contains(node)) {
+                    node.setBackground(Color.blue);
+                    nodeManager.coloredNodes[i][j] = true;
+                    nodeManager.numNodesInColumn[j]++;
+                }
+            }
+        }
     }
 
     private void floodFill(int row, int col, Color startColor, Color fillColor) {

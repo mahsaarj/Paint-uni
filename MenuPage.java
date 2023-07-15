@@ -10,31 +10,35 @@ public class MenuPage extends JFrame{
     private JButton playButton;
 
     public MenuPage() {
-        super("Menu Page");
-        setSize(300, 200);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        super("Menu");
 
         // Create welcome label
-        welcomeLabel = new JLabel("Welcome to the Game!");
+        welcomeLabel = new JLabel("Welcome to the game!");
+        welcomeLabel.setFont(new Font("Arial", Font.BOLD, 20));
         welcomeLabel.setHorizontalAlignment(JLabel.CENTER);
-        add(welcomeLabel, BorderLayout.NORTH);
 
         // Create play button
         playButton = new JButton("Play");
-        add(playButton, BorderLayout.CENTER);
         playButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                // Create a new panel
-                JPanel gamePanel = new JPanel();
-                gamePanel.setBackground(Color.WHITE);
-
-                // Set the new panel as the content pane of the frame
-                setContentPane(gamePanel);
-                revalidate();
+                // Switch to the playground
+                setVisible(false);
+                new Playground();
             }
         });
 
+        // Add components to the content pane
+        JPanel contentPane = new JPanel(new BorderLayout());
+        contentPane.add(welcomeLabel, BorderLayout.NORTH);
+        contentPane.add(playButton, BorderLayout.SOUTH);
+        setContentPane(contentPane);
+
+        // Set frame properties
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 400);
+        setLocationRelativeTo(null);
         setVisible(true);
     }
 }
+
+

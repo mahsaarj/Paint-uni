@@ -6,14 +6,14 @@ import java.awt.*;
 public class NodeManager {
     private JPanel[][] nodes;
     private boolean[][] coloredNodes;
-    private int[] numNodesInRow;
+    private int[] numNodesInColumn;
 
     public NodeManager() {
         nodes = new JPanel[25][25];
         coloredNodes = new boolean[25][25];
-        numNodesInRow = new int[25];
+        numNodesInColumn = new int[25];
         for (int i = 0; i < 25; i++) {
-            numNodesInRow[i] = 0;
+            numNodesInColumn[i] = 0;
             for (int j = 0; j < 25; j++) {
                 nodes[i][j] = new JPanel();
                 nodes[i][j].setBackground(Color.lightGray);
@@ -38,7 +38,7 @@ public class NodeManager {
         return -1;
     }
 
-    public int getColumn(JPanel node) {
+    public int getCol(JPanel node) {
         for (int i = 0; i < 25; i++) {
             for (int j = 0; j < 25; j++) {
                 if (nodes[i][j] == node) {
@@ -50,19 +50,20 @@ public class NodeManager {
     }
 
     public boolean isNodeColored(int row, int col) {
+
         return coloredNodes[row][col];
     }
 
     public void setNodeColored(int row, int col, boolean colored) {
         coloredNodes[row][col] = colored;
         if (colored) {
-            numNodesInRow[row]++;
+            numNodesInColumn[col]++;
         } else {
-            numNodesInRow[row]--;
+            numNodesInColumn[col]--;
         }
     }
 
-    public int getNumNodesInRow(int row) {
-        return numNodesInRow[row];
+    public int getNumNodesInRow(int col) {
+        return numNodesInColumn[col];
     }
 }

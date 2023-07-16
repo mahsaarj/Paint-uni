@@ -1,333 +1,52 @@
 package Package1;
 
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
 
-class Playground extends JFrame {
-    private NodeManager nodeManager;
-    private JPanel gridPanel;
-    private int currentRow;
-    private int currentCol;
-    private boolean dragging;
+public class PlayGround {
+    public PlayGround() {
+        JPanel panel = createPanel();
+        createFrame(panel);
+    }
 
-    public Playground() {
-        super("Playground");
+    public JPanel createPanel() {
+        // Create a new JPanel object
+        JPanel panel = new JPanel();
 
-        // Create node manager
-        nodeManager = new NodeManager();
+        // Set the background color of the panel to white
+        panel.setBackground(Color.WHITE);
 
-        // Create grid panel
-        gridPanel = new JPanel(new GridLayout(25, 25));
-        gridPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        // Create a new NodeManager object and add the grid panel to the panel
+        NodeManager nodeManager = new NodeManager();
+        JPanel gridPanel = nodeManager.getGridPanel();
+        panel.add(gridPanel);
 
-        // Add nodes to grid panel
+        // Save the grid panel information in an ArrayList in the NodeManager object
+        ArrayList<ArrayList<Boolean>> nodeColors = new ArrayList<>();
         for (int i = 0; i < 25; i++) {
+            ArrayList<Boolean> rowColors = new ArrayList<>();
             for (int j = 0; j < 25; j++) {
-                JPanel node = nodeManager.getNode(i, j);
-                gridPanel.add(node);
+                rowColors.add(nodeManager.getNodeColor(i, j));
             }
+            nodeColors.add(rowColors);
         }
+        nodeManager.setNodeColors(nodeColors);
 
-        currentRow = 12;
-        currentCol = 12;
-        RectangleShape rect = new RectangleShape(Color.RED, 100);
-        nodeManager.getNode(currentRow, currentCol).add(rect);
-        updateNodeColor(nodeManager.getNode(currentRow, currentCol), Color.GREEN);
-
-        // Add grid panel to content pane
-        setContentPane(gridPanel);
-
-        // Set frame properties
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        pack();
-        setLocationRelativeTo(null);
-        setVisible(true);
-
-        // Add mouse and keyboard listeners
-        gridPanel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                gridPanel.requestFocusInWindow();
-                int x = e.getX();
-                int y = e.getY();
-                int nodeWidth = gridPanel.getWidth() / 25;
-                int nodeHeight = gridPanel.getHeight() / 25;
-                int row = y / nodeHeight;
-                int col = x / nodeWidth;
-                if (row != currentRow || col != currentCol) {
-                    JPanel currentNode = nodeManager.getNode(currentRow, currentCol);
-                    JPanel newNode = nodeManager.getNode(row, col);
-
-                    // Move rectangle to new node
-                    RectangleShape rect = getRectangle(currentNode);
-                    currentNode.remove(rect);
-                    newNode.add(rect);
-
-                    // Update current row and column
-                    currentRow = row;
-                    currentCol = col;
-
-                    // Update color of new node
-                    updateNodeColor(newNode, Color.RED);
-
-                    // Repaint nodes
-                    currentNode.repaint();
-                    newNode.repaint();
-                }
-                dragging = true;
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (SwingUtilities.isLeftMouseButton(e)) {
-                    JPanel currentNode = nodeManager.getNode(currentRow, currentCol);
-                    if (nodeManager.coloredNodes[currentRow][currentCol]) {
-                        currentNode.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-                        colorNodesInsideBorder();
-                        updateNodesInBorderColor(currentNode, Color.RED); // Update color of nodes inside border
-                    }
-                }
-            }
-        });
-
-        gridPanel.addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (dragging) {
-                    int x = e.getX();
-                    int y = e.getY();
-                    int nodeWidth = gridPanel.getWidth() / 25;
-                    int nodeHeight = gridPanel.getHeight() / 25;
-                    int row = y / nodeHeight;
-                    int col = x / nodeWidth;
-                    if (row != currentRow || col != currentCol) {
-                        JPanel currentNode = nodeManager.getNode(currentRow, currentCol);
-                        JPanel newNode = nodeManager.getNode(row, col);
-
-                        // Move rectangle to new node
-                        RectangleShape rect = getRectangle(currentNode);
-                        currentNode.remove(rect);
-                        newNode.add(rect);
-
-                        // Update current row and column
-                        currentRow = row;
-                        currentCol = col;
-
-                        // Update color of new node
-                        updateNodeColor(newNode, Color.RED);
-
-                        // Repaint nodes
-                        currentNode.repaint();
-                        newNode.repaint();
-                    }
-                }
-            }
-        });
-
-        gridPanel.addKeyListener(new KeyListener() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                int keyCode = e.getKeyCode();
-                switch (keyCode) {
-                    case KeyEvent.VK_UP:
-                        moveNode(-1, 0);
-                        break;
-                    case KeyEvent.VK_DOWN:
-                        moveNode(1, 0);
-                        break;
-                    case KeyEvent.VK_LEFT:
-                        moveNode(0, -1);
-                        break;
-                    case KeyEvent.VK_RIGHT:
-                        moveNode(0, 1);
-                        break;
-                }
-            }
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-            }
-        });
+        return panel;
     }
 
-    private void moveNode(int rowOffset, int colOffset) {
-        int newRow = currentRow + rowOffset;
-        int newCol = currentCol + colOffset;
+    public void createFrame(JPanel panel) {
+        // Create a new JFrame object and add the panel to it
+        JFrame frame = new JFrame("Empty Pane");
+        frame.getContentPane().add(panel);
 
-        // Check if new row and column are within bounds
-        if (newRow >= 0 && newRow < 25 && newCol >= 0 && newCol < 25) {
-            JPanel currentNode = nodeManager.getNode(currentRow, currentCol);
-            JPanel newNode = nodeManager.getNode(newRow, newCol);
+        // Set the properties of the frame
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 400);
 
-            // Move rectangle to new node
-            RectangleShape rect = getRectangle(currentNode);
-            currentNode.remove(rect);
-            newNode.add(rect);
-
-            // Update current row and column
-            currentRow = newRow;
-            currentCol = newCol;
-
-            // Update color of new node
-            updateNodeColor(newNode, Color.RED);
-
-            // Repaint nodes
-            currentNode.repaint();
-            newNode.repaint();
-        }
-    }
-
-    private void updateNodeColor(JPanel node, Color green) {
-        boolean containsRectangle = false;
-        for (Component component : node.getComponents()) {
-            if (component instanceof RectangleShape) {
-                containsRectangle = true;
-                break;
-            }
-        }
-        if (containsRectangle) {
-            node.setBackground(Color.GREEN);
-        } else {
-            node.setBackground(Color.lightGray);
-        }
-    }
-
-    private void updateNodesInBorderColor(JPanel node, Color color) {
-        List<Point> nodesInBorder = getNodesInBorder();
-        for (Point nodePos : nodesInBorder) {
-            JPanel borderNode = nodeManager.getNode(nodePos.x, nodePos.y);
-            if (!borderNode.equals(node)) {
-                updateNodeColor(borderNode, color);
-            }
-        }
-    }
-
-    private List<Point> getNodesInBorder() {
-        List<Point> nodesInBorder = new ArrayList<>();
-        int startRow = currentRow - 1;
-        int startCol = currentCol - 1;
-        int endRow = currentRow + 1;
-        int endCol = currentCol + 1;
-        if (startRow < 0) {
-            startRow = 0;
-        }
-        if (startCol < 0) {
-            startCol = 0;
-        }
-        if (endRow > 24) {
-            endRow = 24;
-        }
-        if (endCol > 24) {
-            endCol = 24;
-        }
-        for (int row = startRow; row <= endRow; row++) {
-            for (int col = startCol; col <= endCol; col++) {
-                if (row != currentRow || col != currentCol) {
-                    nodesInBorder.add(new Point(row, col));
-                }
-            }
-        }
-        return nodesInBorder;
-    }
-
-    private RectangleShape getRectangle(JPanel node) {
-        for (Component comp : node.getComponents()) {
-            if (comp instanceof RectangleShape) {
-                return (RectangleShape) comp;
-            }
-        }
-        return null;
-    }
-
-    public void colorNodesInsideBorder() {
-        // Find the starting node of the closed shape
-        JPanel startNode = null;
-        for (int i = 0; i < 25; i++) {
-            for (int j = 0; j < 25; j++) {
-                if (nodeManager.coloredNodes[i][j]) {
-                    startNode = nodeManager.getNode(i, j);
-                    break;
-                }
-            }
-            if (startNode != null) {
-                break;
-            }
-        }
-
-        if (startNode == null) {
-            return;
-        }
-
-        // Find the nodes inside the closed shape
-        List<JPanel> nodesInsideBorder = new ArrayList<>();
-        Stack<JPanel> stack = new Stack<>();
-        stack.push(startNode);
-        while (!stack.empty()) {
-            JPanel node = stack.pop();
-            nodesInsideBorder.add(node);
-
-            int row = nodeManager.getRow(node);
-            int col = nodeManager.getCol(node);
-
-            // Check north neighbor
-            if (row > 0 && nodeManager.coloredNodes[row-1][col] && !nodesInsideBorder.contains(nodeManager.getNode(row-1, col))) {
-                stack.push(nodeManager.getNode(row-1, col));
-            }
-
-            // Check south neighbor
-            if (row < 24 && nodeManager.coloredNodes[row+1][col] && !nodesInsideBorder.contains(nodeManager.getNode(row+1, col))) {
-                stack.push(nodeManager.getNode(row+1, col));
-            }
-
-            // Check west neighbor
-            if (col > 0 && nodeManager.coloredNodes[row][col-1] && !nodesInsideBorder.contains(nodeManager.getNode(row, col-1))) {
-                stack.push(nodeManager.getNode(row, col-1));
-            }
-
-            // Check east neighbor
-            if (col < 24 && nodeManager.coloredNodes[row][col+1] && !nodesInsideBorder.contains(nodeManager.getNode(row, col+1))) {
-                stack.push(nodeManager.getNode(row, col+1));
-            }
-        }
-
-        // Color the nodes inside the closed shape
-        for (int i = 0; i < 25; i++) {
-            for (int j = 0; j < 25; j++) {
-                JPanel node = nodeManager.getNode(i, j);
-                if (node != null && nodesInsideBorder.contains(node)) {
-                    node.setBackground(Color.blue);
-                    nodeManager.coloredNodes[i][j] = true;
-                    nodeManager.numNodesInColumn[j]++;
-                }
-            }
-        }
-    }
-
-    private void floodFill(int row, int col, Color startColor, Color fillColor) {
-        // Get the node at the current position
-        JPanel node = nodeManager.getNode(row, col);
-
-        // Check if the node is within the grid and has the starting color
-        if (node != null && node.getBackground().equals(startColor)) {
-            // Set the color of the node to the fill color
-            node.setBackground(fillColor);
-
-            // Recursively call the floodFill method on the adjacent nodes
-            floodFill(row - 1, col, startColor, fillColor); // Up
-            floodFill(row + 1, col, startColor, fillColor); // Down
-            floodFill(row, col - 1, startColor, fillColor); // Left
-            floodFill(row, col + 1, startColor, fillColor); // Right
-        }
+        // Make the frame visible
+        frame.setVisible(true);
     }
 }

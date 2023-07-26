@@ -1,4 +1,4 @@
-package Package1;
+package package1;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,8 +11,8 @@ public class Menu extends JPanel{
     private JTextField p1NameFld;
     private JTextField p2NameFld;
     private JSpinner levelSpnr;
-    private JSpinner gameSpeedSpnr;
-    private JSpinner botNumberSpnr;
+    private JSpinner SpeedSpnr;
+    private JSpinner botSpnr;
     private ActionListener actionListener;
 
     Menu(ActionListener actionListener){
@@ -85,12 +85,12 @@ public class Menu extends JPanel{
         JLabel levelLabel = new JLabel("Choose level:");
         levelSpnr = new JSpinner(new SpinnerNumberModel(3 , 1, 3 , 1));
         JLabel speedLabel = new JLabel("Game speed (1-5):");
-        gameSpeedSpnr = new JSpinner(new SpinnerNumberModel(3, 1, 5, 1));
+        SpeedSpnr = new JSpinner(new SpinnerNumberModel(3, 1, 5, 1));
         JLabel botNumberLabel = new JLabel("Number of bots:");
-        botNumberSpnr = new JSpinner(new SpinnerNumberModel(10, 0, 25, 1));
+        botSpnr = new JSpinner(new SpinnerNumberModel(10, 0, 25, 1));
 
         JLabel[] settingLabels = {levelLabel, speedLabel, botNumberLabel};
-        JSpinner[] settingSpinners = { levelSpnr ,gameSpeedSpnr, botNumberSpnr};
+        JSpinner[] settingSpinners = { levelSpnr ,SpeedSpnr, botSpnr};
 
         // Style setting labels
         for(JLabel label : settingLabels){
@@ -109,8 +109,8 @@ public class Menu extends JPanel{
         }
 
         JComponent[] settingComponents = {levelLabel, levelSpnr,
-                speedLabel, gameSpeedSpnr,
-                botNumberLabel, botNumberSpnr};
+                speedLabel, SpeedSpnr,
+                botNumberLabel, botSpnr};
 
         // Add setting labels and spinners
         for(JComponent component : settingComponents){
@@ -129,11 +129,11 @@ public class Menu extends JPanel{
     }
 
     public int getGameSpeed() {
-        return Integer.valueOf(((JTextField)gameSpeedSpnr.getEditor().getComponent(0)).getText());
+        return Integer.valueOf(((JTextField)SpeedSpnr.getEditor().getComponent(0)).getText());
     }
 
     public int getBotNumber() {
-        return Integer.valueOf(((JTextField)botNumberSpnr.getEditor().getComponent(0)).getText());
+        return Integer.valueOf(((JTextField)botSpnr.getEditor().getComponent(0)).getText());
     }
 
     class FieldMouseListener implements MouseListener {

@@ -290,47 +290,71 @@ public class Board extends JPanel {
             g.drawString(string, 2+getWidth() -  barWidth,  barHeight*i + fontHeight);
         }
     }
+
     private void check() {
         Player player;
         nodePlayerMap.clear();
+
+        // Adjust playField size if player is out of bounds
+        if (players.stream().anyMatch(p -> p.getX() < 0)) {
+            int minX = players.stream().mapToInt(Player::getX).min().getAsInt();
+            for (int i = 0; i < playField.size(); i++) {
+                for (int j = 0; j < -minX; j++) {
+                    playField.get(i).add(0, new Node(playField.get(i).get(0).getX() - 1, i));
+                }
+            }
+            areaWidth += Math.abs(minX);
+        }
+        if (players.stream().anyMatch(p -> p.getX() >= areaWidth)) {
+            int maxX = players.stream().mapToInt(Player::getX).max().getAsInt();
+            for (int i = 0; i < playField.size(); i++) {
+                for (int j = 0; j < maxX - areaWidth + 1; j++) {
+                    playField.get(i).add(new Node(playField.get(i).get(playField.get(i).size() - 1).getX() + 1, i));
+                }
+            }
+            areaWidth = maxX + 1;
+        }
+        if (players.stream().anyMatch(p -> p.getY() < 0)) {
+            int minY = players.stream().mapToInt(Player::getY).min().getAsInt();
+            ArrayList<ArrayList<Node>> newRows = new ArrayList<>();
+            for (int i = 0; i < -minY; i++) {
+                ArrayList<Node> newRow = new ArrayList<>();
+                for (int j = 0; j < areaWidth; j++) {
+                    newRow.add(new Node(j, playField.get(0).get(0).getY() - 1));
+                }
+                newRows.add(newRow);
+            }
+            playField.addAll(0, newRows);
+            areaHeight += Math.abs(minY);
+        }
+        if (players.stream().anyMatch(p -> p.getY() >= areaHeight)) {
+            int maxY = players.stream().mapToInt(Player::getY).max().getAsInt();
+            ArrayList<ArrayList<Node>> newRows = new ArrayList<>();
+            for (int i = 0; i < maxY - areaHeight + 1; i++) {
+                ArrayList<Node> newRow = new ArrayList<>();
+                for (int j = 0; j < areaWidth; j++) {
+                    newRow.add(new Node(j, playField.get(playField.size() - 1).get(0).getY() + 1));
+                }
+                newRows.add(newRow);
+            }
+            playField.addAll(newRows);
+            areaHeight = maxY + 1;
+        }
+
         for (int i = 0; i < players.size(); i++) {
             player = players.get(i);
             player.move();
-
-            if (player.getX() < 0 || player.getX() >= areaWidth || player.getY() < 0 || player.getY() >= areaHeight) {
-
-                int newWidth = Math.max(player.getX() + 1, areaWidth);
-                int newHeight = Math.max(player.getY() + 1, areaHeight);
-
-                // Create new nodes for the expanded area
-                for (int y = areaHeight; y < newHeight; y++) {
-                    for (int x = areaWidth; x < newWidth; x++) {
-                        Node node = new Node(x, y);
-                        playField.add(new ArrayList<>(Collections.nCopies(newWidth, node)));
-                    }
-                }
-
-                areaWidth = newWidth;
-                areaHeight = newHeight;
-            }
 
             Node node = getnode(player.getX(), player.getY());
             player.checkCollision(node);
             player.setCurrentnode(node);
             findEncounter(player, node);
 
-            // If player is outside their owned territory
             if (node.getOwner() != player && player.getAlive()) {
                 player.setnodeContested(node);
-                // If player arrives back to an owned node
             } else if (player.getnodesContested().size() > 0) {
                 player.contestToOwned();
                 fillEnclosure(player);
-            }
-
-            // If BotPlayer is killed, add it to deadBots list
-            if (player instanceof BotPlayer && !player.getAlive()) {
-                deadBots.add(player);
             }
         }
         botsPoints();
@@ -350,6 +374,175 @@ public class Board extends JPanel {
         players.removeIf(p -> !p.getAlive());
     }
 
+    /*private void check() {
+        Player player;
+        nodePlayerMap.clear();
+
+        // Adjust playField size if player is out of bounds
+        if (players.stream().anyMatch(p -> p.getX() < 0)) {
+            for (int i = 0; i < playField.size(); i++) {
+                for (int j = 0; j < -players.stream().mapToInt(Player::getX).min().getAsInt(); j++) {
+                    playField.get(i).add(0, new Node(playField.get(i).get(0).getX() - 1, i));
+                }
+            }
+            areaWidth -= players.stream().mapToInt(Player::getX).min().getAsInt();
+        }
+        if (players.stream().anyMatch(p -> p.getX() >= areaWidth)) {
+            for (int i = 0; i < playField.size(); i++) {
+                for (int j = 0; j < players.stream().mapToInt(Player::getX).max().getAsInt() - areaWidth + 1; j++) {
+                    playField.get(i).add(new Node(playField.get(i).get(playField.get(i).size() - 1).getX() + 1, i));
+                }
+            }
+            areaWidth = players.stream().mapToInt(Player::getX).max().getAsInt() + 1;
+        }
+        if (players.stream().anyMatch(p -> p.getY() < 0)) {
+            ArrayList<ArrayList<Node>> newRows = new ArrayList<>();
+            for (int i = 0; i < -players.stream().mapToInt(Player::getY).min().getAsInt(); i++) {
+                ArrayList<Node> newRow = new ArrayList<>();
+                for (int j = 0; j < areaWidth; j++) {
+                    newRow.add(new Node(j, playField.get(0).get(0).getY() - 1));
+                }
+                newRows.add(newRow);
+            }
+            playField.addAll(0, newRows);
+            areaHeight -= players.stream().mapToInt(Player::getY).min().getAsInt();
+        }
+        if (players.stream().anyMatch(p -> p.getY() >= areaHeight)) {
+            ArrayList<ArrayList<Node>> newRows = new ArrayList<>();
+            for (int i = 0; i < players.stream().mapToInt(p -> p.getY() - areaHeight + 1).max().getAsInt(); i++) {
+                ArrayList<Node> newRow = new ArrayList<>();
+                for (int j = 0; j < areaWidth; j++) {
+                    newRow.add(new Node(j, playField.get(playField.size() - 1).get(0).getY() + 1));
+                }
+                newRows.add(newRow);
+            }
+            playField.addAll(newRows);
+            areaHeight = players.stream().mapToInt(Player::getY).max().getAsInt() + 1;
+        }
+
+        for (int i = 0; i < players.size(); i++) {
+            player = players.get(i);
+            player.move();
+
+            Node node = getnode(player.getX(), player.getY());
+            player.checkCollision(node);
+            player.setCurrentnode(node);
+            findEncounter(player, node);
+
+            if (node.getOwner() != player && player.getAlive()) {
+                player.setnodeContested(node);
+            } else if (player.getnodesContested().size() > 0) {
+                player.contestToOwned();
+                fillEnclosure(player);
+            }
+        }
+        botsPoints();
+
+        boolean allKilled = true;
+        for (HumanPlayer humanPlayer : humanPlayers) {
+            humanPlayer.updateD();
+            // Sets painter to stop drawing if humanPlayer is dead
+            player_painter.get(humanPlayer).setDraw(humanPlayer.getAlive());
+            allKilled = allKilled && !humanPlayer.getAlive();
+        }
+        if (allKilled) {
+            endGame();
+        }
+
+        // Remove dead players
+        players.removeIf(p -> !p.getAlive());
+    }
+
+    /*private void check() {
+        Player player;
+        nodePlayerMap.clear();
+        for (int i = 0; i < players.size(); i++) {
+            player = players.get(i);
+            player.move();
+
+            if (player.getX() < 0 || player.getX() >= areaWidth || player.getY() < 0 || player.getY() >= areaHeight) {
+                // Player is out of the game area, add new nodes and update player position
+                int playerX = player.getX();
+                int playerY = player.getY();
+
+                // Add new nodes to the playField
+                while (playerX < 0) {
+                    for (int j = 0; j < playField.size(); j++) {
+                        playField.get(j).add(0, new Node(playerX - 1, j));
+                    }
+                    playerX++;
+                    areaWidth++;
+                }
+                while (playerX >= areaWidth) {
+                    for (int j = 0; j < playField.size(); j++) {
+                        playField.get(j).add(new Node(playerX + 1, j));
+                    }
+                    areaWidth++;
+                }
+
+
+                while (playerY < 0) {
+                    ArrayList<Node> newRow = new ArrayList<>();
+                    for (int j = 0; j < areaWidth; j++) {
+                        newRow.add(new Node(j, playerY - 1));
+                    }
+                    playField.add(0, newRow);
+                    playerY++;
+                    areaHeight++;
+                }
+                while (playerY >= areaHeight) {
+                    ArrayList<Node> newRow = new ArrayList<>();
+                    for (int j = 0; j < areaWidth; j++) {
+                        newRow.add(new Node(j, playerY + 1));
+                    }
+                    playField.add(newRow);
+                    areaHeight++;
+                }
+
+                Node node = getnode(player.getX(), player.getY());
+                player.checkCollision(node);
+                player.setCurrentnode(node);
+                findEncounter(player, node);
+
+                // If player is outside their owned territory
+                if (node.getOwner() != player && player.getAlive()) {
+                    player.setnodeContested(node);
+                    // If player arrives back to an owned node
+                }
+
+            } else {
+                Node node = getnode(player.getX(), player.getY());
+                player.checkCollision(node);
+                player.setCurrentnode(node);
+                findEncounter(player, node);
+
+                // If player is outside their owned territory
+                if (node.getOwner() != player && player.getAlive()) {
+                    player.setnodeContested(node);
+                    // If player arrives back to an owned node
+                } else if (player.getnodesContested().size() > 0) {
+                    player.contestToOwned();
+                    fillEnclosure(player);
+                }
+            }
+        }
+        botsPoints();
+
+        boolean allKilled = true;
+        for (HumanPlayer humanPlayer : humanPlayers) {
+            humanPlayer.updateD();
+            // Sets painter to stop drawing if humanPlayer is dead
+            player_painter.get(humanPlayer).setDraw(humanPlayer.getAlive());
+            allKilled = allKilled && !humanPlayer.getAlive();
+        }
+        if (allKilled) {
+            endGame();
+        }
+
+        // Remove dead players
+        players.removeIf(p -> !p.getAlive());
+    }*/
+
     private void endGame(){
         JOptionPane.showMessageDialog(this, "You lost, game over", "GAME OVER", JOptionPane.PLAIN_MESSAGE);
         actionListener.actionPerformed(new ActionEvent(this, 0, "End Game"));
@@ -366,6 +559,33 @@ public class Board extends JPanel {
             }
         }
     }
+
+    /*private void findEncounter(Player player, Node node) {
+        // If corresponding node is found in nodePlayerMap
+        if(nodePlayerMap.containsKey(node)) {
+            Player otherPlayer = nodePlayerMap.get(node);
+
+            // If the encountered player owns the node, skip the encounter
+            if (node.getOwner() == player) {
+                return;
+            }
+
+            // Check for a winner in the encounter
+            if (otherPlayer.getnodesContested().size() > player.getnodesContested().size()) {
+                otherPlayer.die();
+            } else if (otherPlayer.getnodesContested().size() < player.getnodesContested().size()) {
+                player.die();
+            } else if (otherPlayer.getnodesContested().size() == player.getnodesContested().size()) {
+                if (otherPlayer.getnodesOwned().size() > player.getnodesOwned().size()) {
+                    otherPlayer.die();
+                } else {
+                    player.die();
+                }
+            }
+        } else { // If no corresponding node is found, add node and player to nodePlayerMap
+            nodePlayerMap.put(node, player);
+        }
+    }*/
 
     private void findEncounter(Player player, Node node) {
         // If corresponding node is found in nodePlayerMap
@@ -403,7 +623,7 @@ public class Board extends JPanel {
         int maxX = 0;
         int minX = playField.get(0).size();
         int maxY = 0;
-        int minY = playField.size();
+        int minY = playField.isEmpty() ? 0 : playField.size();
         for (Node n : player.getnodesOwned()) {
             if (n.getX() > maxX) maxX = n.getX();
             if (n.getX() < minX) minX = n.getX();
@@ -492,12 +712,19 @@ public class Board extends JPanel {
     }
 
     Node getnode(int x, int y) {
-        if (y < 0 || y >= playField.size() || x < 0 || x >= playField.get(y).size()) {
-            // Return a new Node object with no owner and a contested owner of null
-            return new Node(x, y);
-        } else {
-            return playField.get(y).get(x);
+        // Adjust x and y to be within bounds
+        if (x < 0) {
+            x = 0;
+        } else if (x >= areaWidth) {
+            x = areaWidth - 1;
         }
+        if (y < 0) {
+            y = 0;
+        } else if (y >= areaHeight) {
+            y = areaHeight - 1;
+        }
+
+        return playField.get(y).get(x);
     }
 
     private class ScheduleTask extends TimerTask {

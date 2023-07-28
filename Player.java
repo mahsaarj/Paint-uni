@@ -7,6 +7,8 @@ abstract class Player implements Comparable<Player> {
 
     int x;
     int y;
+    int minX , minY;
+    int maxX , maxY;
     int dx;
     int dy;
     private Color color;
@@ -18,7 +20,7 @@ abstract class Player implements Comparable<Player> {
 
     private Boolean isAlive = true;
 
-    private Node currentnode;
+    Node currentnode;
 
     Player(int height, int width, Color color){
         x = (int)(Math.random() * (width - 2) +1);
@@ -129,6 +131,21 @@ abstract class Player implements Comparable<Player> {
         this.currentnode = currentnode;
     }
 
+    public void setBoundary(int minX, int minY, int maxX, int maxY) {
+        this.minX = minX;
+        this.minY = minY;
+        this.maxX = maxX;
+        this.maxY = maxY;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
     int getDx() {
         return dx;
     }
@@ -140,6 +157,26 @@ abstract class Player implements Comparable<Player> {
     String getName() {
         return name;
     }
+
+    public int getMaxY() {
+        return maxY;
+    }
+
+
+    public int getMaxX() {
+        return maxX;
+    }
+
+
+    public int getMinY() {
+        return minY;
+    }
+
+
+    public int getMinX() {
+        return minX;
+    }
+
 
     Boolean getAlive() {
         return isAlive;

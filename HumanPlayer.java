@@ -2,6 +2,9 @@ package package1;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class HumanPlayer extends Player {
     private int nextKey;

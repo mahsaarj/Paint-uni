@@ -1,18 +1,22 @@
 package package1;
 
 import java.awt.*;
+import java.util.ArrayList;
 
 class Node {
 
     private Player owner;
     private Color color = Color.white;
     private Player contestedOwner;
+    private Node parent;
+    private ArrayList<Node> neighbors;
     private int x;
     private int y;
 
     Node(int x, int y){
         this.x = x;
         this.y = y;
+        this.neighbors = new ArrayList<Node>();
     }
 
     Color getColor(){
@@ -63,6 +67,23 @@ class Node {
         this.owner = owner;
     }
 
+    public void addNeighbor(Node node) {
+        neighbors.add(node);
+    }
+
+    public ArrayList<Node> getNeighbors() {
+        return neighbors;
+    }
+
+
+    Node getParent() {
+        return parent;
+    }
+
+    void setParent(Node parent) {
+        this.parent = parent;
+    }
+
     int getX() {
         return x;
     }
@@ -71,4 +92,11 @@ class Node {
         return y;
     }
 
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
 }

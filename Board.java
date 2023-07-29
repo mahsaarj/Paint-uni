@@ -15,6 +15,7 @@ public class Board extends JPanel {
     private ArrayList<ArrayList<Node>> playField;
     private final int size = 20;
     private Menu menu;
+    private Color startingColor;
 
     private int botNumber;
     private ArrayList<Player> players = new ArrayList<>();
@@ -40,11 +41,11 @@ public class Board extends JPanel {
         this.areaHeight = 100;
         this.areaWidth = 100;
         this.playField = new ArrayList<>();
-        //this.botNumber = botNumber;
         this.menu = menu;
         this.botNumber = menu.getBotNumber();
         int[] speeds = {12, 10, 8, 6, 4};
         checkReset = speeds[gameSpeed - 1];
+        this.startingColor = startingColor;
 
         for (int i = 0; i < areaHeight; i++) {
             ArrayList<Node> row = new ArrayList<>();
@@ -169,6 +170,49 @@ public class Board extends JPanel {
                 public void actionPerformed(ActionEvent evt) { humanPlayers.get(0).setNextKey(KeyEvent.VK_RIGHT);
                 }
             });
+
+            // add key binding for shoot key (Enter key)
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "shoot");
+            actionMap.put("shoot", new AbstractAction() {
+                public void actionPerformed(ActionEvent evt) {
+                    HumanPlayer player = humanPlayers.get(0); // assuming there's only one human player
+                    int numShots = 5; // hardcoded number of shots for the human player
+                    // check if the player has any shots left
+                    if (player.getAvailableShots() <= 0) {
+                        return;
+                    }
+                    // determine the center node position
+                    int centerNodeX = player.getX() + 6 * player.getDx();
+                    int centerNodeY = player.getY() + 6 * player.getDy();
+
+                    // calculate the starting and ending positions for the nodes to color
+                    int startX = centerNodeX - 1;
+                    int startY = centerNodeY - 1;
+                    int endX = centerNodeX + 1;
+                    int endY = centerNodeY + 1;
+
+                    // iterate over the nodes within the starting and ending positions and color the 3x3 area around the 6th node away from the player's current position
+                    for (int x = startX; x <= endX; x++) {
+                        for (int y = startY; y <= endY; y++) {
+                            if (x < 0 || x >= areaWidth || y < 0 || y >= areaHeight) {
+                                continue; // skip nodes outside the game area
+                            }
+                            playField.get(y).get(x).setColor(player.getColor().darker()); // color the node
+                        }
+                    }
+
+                    // iterate over all players and check if any of them are occupying one of the nodes in the 3x3 area
+                    for (Player p : players) {
+                        if (p != player && p.getAlive() && isPlayerIn3x3Area(p, player)) {
+                            p.die(); // kill the other player
+                        }
+                    }
+
+                    // decrement the number of shots left for the player
+                    player.useShot();
+                }
+            });
+
         }else if(humanPlayers.size() == 2){
             inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "moveP1UP");
             actionMap.put("moveP1UP", new AbstractAction() {
@@ -219,6 +263,16 @@ public class Board extends JPanel {
                 actionListener.actionPerformed(action);
             }
         });
+    }
+
+    private boolean isPlayerIn3x3Area(Player targetPlayer, Player shooter) {
+        int targetX = targetPlayer.getX();
+        int targetY = targetPlayer.getY();
+        int shooterX = shooter.getX();
+        int shooterY = shooter.getY();
+
+        return (targetX >= shooterX - 1 && targetX <= shooterX + 1 &&
+                targetY >= shooterY - 1 && targetY <= shooterY + 1);
     }
 
     private void startingArea(Player player) {
@@ -497,12 +551,18 @@ public class Board extends JPanel {
         for (Node n : player.getnodesOwned()) {
             int y = n.getY();
             int x = n.getX();
+
+            // Check adjacent nodes within the current bounds of the playfield
             if (y - 1 >= 0) toCheck.add(getnode(x, y - 1));
-            if (y + 1 < playField.size()) toCheck.add(getnode(x, y + 1));
+            if (y + 1 < areaHeight) toCheck.add(getnode(x, y + 1));
             if (x - 1 >= 0) toCheck.add(getnode(x - 1, y));
-            if (y < playField.size() - 1 && x + 1 < playField.get(y).size()) {
-                toCheck.add(getnode(x + 1, y));
-            }
+            if (x + 1 < areaWidth) toCheck.add(getnode(x + 1, y));
+
+            // Check adjacent nodes outside the current bounds of the playfield
+            if (y == 0) toCheck.add(new Node(x, -1));
+            if (y == areaHeight - 1) toCheck.add(new Node(x, areaHeight));
+            if (x == 0) toCheck.add(new Node(-1, y));
+            if (x == areaWidth - 1) toCheck.add(new Node(areaWidth, y));
         }
     }
 
@@ -538,13 +598,6 @@ public class Board extends JPanel {
         }
     }
 
-    private void assignOwnership(Player player, ArrayList<Node> inside) {
-        // Set all enclosed nodes to be owned by player
-        for (Node n : inside) {
-            player.setnodeOwned(n);
-        }
-    }
-
     public void fillEnclosure(Player player) {
         // Set boundary of the enclosure
         setBoundary(player);
@@ -575,8 +628,46 @@ public class Board extends JPanel {
             }
         }
 
+        // Adjust boundary if any nodes are outside the current bounds of the playfield
+        ArrayList<Node> boundaryNodes = new ArrayList<>();
+        for (Node n : outside) {
+            int y = n.getY();
+            int x = n.getX();
+            if (y == -1) {
+                player.setMinX(Math.min(player.getMinX(), x));
+            } else if (y == areaHeight) {
+                player.setMaxX(Math.max(player.getMaxX(), x));
+            } else if (x == -1) {
+                player.setMinY(Math.min(player.getMinY(), y));
+            } else if (x == areaWidth) {
+                player.setMaxY(Math.max(player.getMaxY(), y));
+            }
+            boundaryNodes.add(getnode(x, y));
+        }
+
+        // Perform DFS again to determine the enclosed area within the new boundary
+        visited.clear();
+        outside.clear();
+        for (Node n : boundaryNodes) {
+            if (!visited.contains(n) && (n.getOwner() != player)) {
+                ArrayList<Node> result = doDFS(n, player, visited, outside);
+                if (result == visited) {
+                    inside.addAll(result);
+                } else {
+                    outside.addAll(result);
+                }
+            }
+        }
+
         // Assign ownership of enclosed nodes to player
         assignOwnership(player, inside);
+    }
+
+    private void assignOwnership(Player player, ArrayList<Node> inside) {
+        // Set all enclosed nodes to be owned by player
+        for (Node n : inside) {
+            player.setnodeOwned(n);
+        }
     }
 
     void setPaused(Boolean b){
@@ -599,21 +690,90 @@ public class Board extends JPanel {
         return checkReset;
     }
 
+
     Node getnode(int x, int y) {
         // Adjust x and y to be within bounds
-        if (x < 0) {
-            x = 0;
-        } else if (x >= areaWidth) {
-            x = areaWidth - 1;
+        while (x < 0) {
+            for (int i = 0; i < playField.size(); i++) {
+                Node newNode = new Node(0, i);
+                Node nextNode = playField.get(i).get(0); // get the next node in the row
+                newNode.connect(nextNode); // connect the new node to the next node
+                playField.get(i).add(0, newNode);
+            }
+            areaWidth++;
+            x++;
         }
-        if (y < 0) {
-            y = 0;
-        } else if (y >= areaHeight) {
-            y = areaHeight - 1;
+        while (y < 0) {
+            ArrayList<Node> row = new ArrayList<>();
+            for (int i = 0; i < areaWidth; i++) {
+                Node newNode = new Node(i, 0);
+                Node nextNode = playField.get(0).get(i); // get the next node in the column
+                newNode.connect(nextNode); // connect the new node to the next node
+                row.add(newNode);
+            }
+            playField.add(0, row);
+            areaHeight++;
+            y++;
+        }
+        while (x >= areaWidth) {
+            for (int i = 0; i < playField.size(); i++) {
+                Node newNode = new Node(areaWidth, i);
+                Node prevNode = playField.get(i).get(areaWidth - 1); // get the previous node in the row
+                prevNode.connect(newNode); // connect the previous node to the new node
+                playField.get(i).add(newNode);
+            }
+            areaWidth++;
+        }
+        while (y >= areaHeight) {
+            ArrayList<Node> row = new ArrayList<>();
+            for (int i = 0; i < areaWidth; i++) {
+                Node newNode = new Node(i, areaHeight);
+                Node prevNode = playField.get(areaHeight - 1).get(i); // get the previous node in the column
+                prevNode.connect(newNode); // connect the previous node to the new node
+                row.add(newNode);
+            }
+            playField.add(row);
+            areaHeight++;
         }
 
         return playField.get(y).get(x);
     }
+
+    /*Node getnode(int x, int y) {
+        // Adjust x and y to be within bounds
+        while (x < 0) {
+            for (int i = 0; i < playField.size(); i++) {
+                playField.get(i).add(0, new Node(0, i));
+            }
+            areaWidth++;
+            x++;
+        }
+        while (y < 0) {
+            ArrayList<Node> row = new ArrayList<>();
+            for (int i = 0; i < areaWidth; i++) {
+                row.add(new Node(i, 0));
+            }
+            playField.add(0, row);
+            areaHeight++;
+            y++;
+        }
+        while (x >= areaWidth) {
+            for (int i = 0; i < playField.size(); i++) {
+                playField.get(i).add(new Node(areaWidth, i));
+            }
+            areaWidth++;
+        }
+        while (y >= areaHeight) {
+            ArrayList<Node> row = new ArrayList<>();
+            for (int i = 0; i < areaWidth; i++) {
+                row.add(new Node(i, areaHeight));
+            }
+            playField.add(row);
+            areaHeight++;
+        }
+
+        return playField.get(y).get(x);
+    }*/
 
     private class ScheduleTask extends TimerTask {
 
@@ -632,93 +792,3 @@ public class Board extends JPanel {
         return playField.get(y).get(x);
     }
 }
-
- /*private void fillEnclosure(Player player) {
-        // Set boundary
-        int maxX = Integer.MIN_VALUE;
-        int minX = Integer.MAX_VALUE;
-        int maxY = Integer.MIN_VALUE;
-        int minY = Integer.MAX_VALUE;
-        for (Node n : player.getnodesOwned()) {
-            if (n.getX() > maxX) maxX = n.getX();
-            if (n.getX() < minX) minX = n.getX();
-            if (n.getY() > maxY) maxY = n.getY();
-            if (n.getY() < minY) minY = n.getY();
-        }
-
-        // Adjust boundary if player is out of bounds
-        if (minX < 0) {
-            maxX -= minX;
-            for (Node n : player.getnodesOwned()) {
-                n.setX(n.getX() - minX);
-            }
-            minX = 0;
-        }
-        if (minY < 0) {
-            maxY -= minY;
-            for (Node n : player.getnodesOwned()) {
-                n.setY(n.getY() - minY);
-            }
-            minY = 0;
-        }
-
-        // Necessary collections for DFS to work
-        ArrayList<Node> outside = new ArrayList<>();
-        ArrayList<Node> inside = new ArrayList<>();
-        ArrayList<Node> visited = new ArrayList<>();
-        HashSet<Node> toCheck = new HashSet<>();
-
-        // Add all adjacent nodes
-        int y;
-        int x;
-        for (Node n : player.getnodesOwned()) {
-            y = n.getY();
-            x = n.getX();
-            if (y - 1 >= 0) toCheck.add(getnode(x, y - 1));
-            if (y + 1 < playField.size()) toCheck.add(getnode(x, y + 1));
-            if (x - 1 >= 0) toCheck.add(getnode(x - 1, y));
-            if (y < playField.size() - 1 && x + 1 < playField.get(y).size()) {
-                toCheck.add(getnode(x + 1, y));
-            }        }
-
-        // Loop over all nodes to do DFS from
-        for (Node n : toCheck) {
-            if (!inside.contains(n)) {
-                Stack<Node> stack = new Stack<>();
-                boolean cont = true;
-                Node v;
-                visited.clear();
-
-                // DFS algorithm
-                stack.push(n);
-                while ((!stack.empty()) && cont) {
-                    v = stack.pop();
-                    if (!visited.contains(v) && (v.getOwner() != player)) {
-                        y = v.getY();
-                        x = v.getX();
-                        if (outside.contains(v) //If already declared as outside
-                                || x < minX || x > maxX || y < minY || y > maxY //If outside of boundary
-                                || x == playField.get(y).size() - 1 || x == 0 || y == 0 || y == playField.size() - 1) { // If it is a edge node
-                            cont = false;
-                        } else {
-                            visited.add(v);
-                            if (y - 1 >= 0) stack.push(getnode(x, y - 1));
-                            if (y + 1 < playField.size()) stack.push(getnode(x, y + 1));
-                            if (x - 1 >= 0) stack.push(getnode(x - 1, y));
-                            if (x + 1 < playField.get(y).size()) stack.push(getnode(x + 1, y));
-                        }
-                    }
-                }
-                if (cont) { // If DFS don't find boundary
-                    inside.addAll(visited);
-                } else {
-                    outside.addAll(visited);
-                }
-            }
-        }
-
-        // Set all enclosed nodes to be owned by player
-        for (Node n : inside) {
-            player.setnodeOwned(n);
-        }
-    }*/

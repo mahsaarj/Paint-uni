@@ -171,6 +171,61 @@ public class Board extends JPanel {
                 }
             });
 
+            // add key binding for collision check key (Space key)
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "collisionCheck");
+            actionMap.put("collisionCheck", new AbstractAction() {
+                private long lastCheckTime = 0;
+                private final long CHECK_INTERVAL = 3000; // check every 3 seconds
+
+                public void actionPerformed(ActionEvent evt) {
+                    HumanPlayer player = humanPlayers.get(0); // assuming there's only one human player
+                    int dx = player.getDx();
+                    int dy = player.getDy();
+                    int x = player.getX();
+                    int y = player.getY();
+
+                    // check if enough time has passed since the last collision check
+                    long now = System.currentTimeMillis();
+                    long timeSinceLastCheck = now - lastCheckTime; // calculate time since last check
+                    if (timeSinceLastCheck < CHECK_INTERVAL) {
+                        return;
+                    }
+                    lastCheckTime = now;
+
+                    // print time since last check
+                    System.out.println("Time since last collision check: " + timeSinceLastCheck + " ms");
+
+                    // check for collisions with other players in the direction the player is moving
+                    for (Player p : players) {
+                        if (p != player && p.getAlive() && isPlayerInMovingDirection(p, x, y, dx, dy)) {
+                            p.die(); // kill the other player
+                            System.out.println("Player " + p.getName() + " has died!");
+                        }
+                    }
+                }
+
+                private boolean isPlayerInMovingDirection(Player p, int x, int y, int dx, int dy) {
+                    // check if the other player is on the same x or y coordinate in the direction the player is moving
+                    if (dx > 0 && p.getX() == x + dx * 10 && p.getY() >= y - 10 && p.getY() <= y + 10) {
+                        System.out.println("Collision detected with player " + p.getName() + " in the positive x direction.");
+                        return true;
+                    }
+                    if (dx < 0 && p.getX() == x + dx * 10 && p.getY() >= y - 10 && p.getY() <= y + 10) {
+                        System.out.println("Collision detected with player " + p.getName() + " in the negative x direction.");
+                        return true;
+                    }
+                    if (dy > 0 && p.getY() == y + dy * 10 && p.getX() >= x - 10 && p.getX() <= x + 10) {
+                        System.out.println("Collision detected with player " + p.getName() + " in the positive y direction.");
+                        return true;
+                    }
+                    if (dy < 0 && p.getY() == y + dy * 10 && p.getX() >= x - 10 && p.getX() <= x + 10) {
+                        System.out.println("Collision detected with player " + p.getName() + " in the negative y direction.");
+                        return true;
+                    }
+                    return false;
+                }
+            });
+
             // add key binding for shoot key (Enter key)
             inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "shoot");
             actionMap.put("shoot", new AbstractAction() {
@@ -264,6 +319,7 @@ public class Board extends JPanel {
             }
         });
     }
+
 
     private boolean isPlayerIn3x3Area(Player targetPlayer, Player shooter) {
         int targetX = targetPlayer.getX();
@@ -738,42 +794,6 @@ public class Board extends JPanel {
 
         return playField.get(y).get(x);
     }
-
-    /*Node getnode(int x, int y) {
-        // Adjust x and y to be within bounds
-        while (x < 0) {
-            for (int i = 0; i < playField.size(); i++) {
-                playField.get(i).add(0, new Node(0, i));
-            }
-            areaWidth++;
-            x++;
-        }
-        while (y < 0) {
-            ArrayList<Node> row = new ArrayList<>();
-            for (int i = 0; i < areaWidth; i++) {
-                row.add(new Node(i, 0));
-            }
-            playField.add(0, row);
-            areaHeight++;
-            y++;
-        }
-        while (x >= areaWidth) {
-            for (int i = 0; i < playField.size(); i++) {
-                playField.get(i).add(new Node(areaWidth, i));
-            }
-            areaWidth++;
-        }
-        while (y >= areaHeight) {
-            ArrayList<Node> row = new ArrayList<>();
-            for (int i = 0; i < areaWidth; i++) {
-                row.add(new Node(i, areaHeight));
-            }
-            playField.add(row);
-            areaHeight++;
-        }
-
-        return playField.get(y).get(x);
-    }*/
 
     private class ScheduleTask extends TimerTask {
 

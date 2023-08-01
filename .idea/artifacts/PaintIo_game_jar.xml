@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="PaintIo-game:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/PaintIo_game_jar</output-path>
+    <root id="archive" name="PaintIo-game.jar">
+      <element id="module-output" name="PaintIo-game" />
+    </root>
+  </artifact>
+</component>

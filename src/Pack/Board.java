@@ -234,7 +234,6 @@ public class Board extends JPanel {
                     int numShots = 5; // hardcoded number of shots for the human player
                     // check if the player has any shots left
                     if (player.getAvailableShots() <= 0) {
-                        System.out.println("You have no shots left!");
                         return;
                     }
                     // determine the center node position
@@ -259,7 +258,7 @@ public class Board extends JPanel {
 
                     // iterate over all players and check if any of them are occupying one of the nodes in the 3x3 area
                     for (Player p : players) {
-                        if (p != player && p.getAlive() && !isBotPlayer(p) && isPlayerIn3x3Area(p, player)) {
+                        if (p != player && p.getAlive() && isPlayerIn3x3Area(p, player)) {
                             p.die(); // kill the other player
                             System.out.println("Player " + p.getName() + " has died by weapon A!");
                         }
@@ -267,7 +266,6 @@ public class Board extends JPanel {
 
                     // decrement the number of shots left for the player
                     player.useShot();
-                    System.out.println("You have " + player.getAvailableShots() + " shots left.");
                 }
             });
 

@@ -234,6 +234,7 @@ public class Board extends JPanel {
                     int numShots = 5; // hardcoded number of shots for the human player
                     // check if the player has any shots left
                     if (player.getAvailableShots() <= 0) {
+                        System.out.println("You have no shots left!");
                         return;
                     }
                     // determine the center node position
@@ -258,7 +259,7 @@ public class Board extends JPanel {
 
                     // iterate over all players and check if any of them are occupying one of the nodes in the 3x3 area
                     for (Player p : players) {
-                        if (p != player && p.getAlive() && isPlayerIn3x3Area(p, player)) {
+                        if (p != player && p.getAlive() && !isBotPlayer(p) && isPlayerIn3x3Area(p, player)) {
                             p.die(); // kill the other player
                             System.out.println("Player " + p.getName() + " has died by weapon A!");
                         }
@@ -266,6 +267,7 @@ public class Board extends JPanel {
 
                     // decrement the number of shots left for the player
                     player.useShot();
+                    System.out.println("You have " + player.getAvailableShots() + " shots left.");
                 }
             });
 
@@ -322,15 +324,26 @@ public class Board extends JPanel {
         });
     }
 
+    private boolean isBotPlayer(Player player) {
+        return player instanceof BotPlayer;
+    }
 
-    private boolean isPlayerIn3x3Area(Player targetPlayer, Player shooter) {
-        int targetX = targetPlayer.getX();
-        int targetY = targetPlayer.getY();
-        int shooterX = shooter.getX();
-        int shooterY = shooter.getY();
+    private boolean isPlayerIn3x3Area(Player p, HumanPlayer player) {
+        int centerX = player.getX() + 6 * player.getDx();
+        int centerY = player.getY() + 6 * player.getDy();
+        int playerX = p.getX();
+        int playerY = p.getY();
 
-        return (targetX >= shooterX - 1 && targetX <= shooterX + 1 &&
-                targetY >= shooterY - 1 && targetY <= shooterY + 1);
+        if (p instanceof BotPlayer || p instanceof SmartBot) {
+            // Bot players and Smart Bots are affected by the weapon
+            if (playerX >= centerX - 1 && playerX <= centerX + 1 &&
+                    playerY >= centerY - 1 && playerY <= centerY + 1) {
+                return true;
+            }
+            return false;
+        }
+
+        return false;
     }
 
     private void startingArea(Player player) {
@@ -519,6 +532,8 @@ public class Board extends JPanel {
         }
         if (allKilled) {
             endGame();
+        } else if (players.size() == 1 && players.get(0) instanceof HumanPlayer) {
+            winGame();
         }
 
         // Remove dead players
@@ -527,6 +542,11 @@ public class Board extends JPanel {
 
     private void endGame(){
         JOptionPane.showMessageDialog(this, "You lost, game over", "GAME OVER", JOptionPane.PLAIN_MESSAGE);
+        actionListener.actionPerformed(new ActionEvent(this, 0, "End Game"));
+    }
+
+    private void winGame(){
+        JOptionPane.showMessageDialog(this, "Congrats", "YOU WON", JOptionPane.PLAIN_MESSAGE);
         actionListener.actionPerformed(new ActionEvent(this, 0, "End Game"));
     }
 
@@ -786,58 +806,6 @@ public class Board extends JPanel {
 
         return playField.get(y).get(x);
     }
-
-    /*Node getnode(int x, int y) {
-        // Adjust x and y to be within bounds
-        if (x < 0) {
-            while (x < 0) {
-                for (int i = 0; i < playField.size(); i++) {
-                    Node newNode = new Node(0, i);
-                    Node nextNode = playField.get(i).get(0); // get the next node in the row
-                    newNode.connect(nextNode); // connect the new node to the next node
-                    playField.get(i).add(0, newNode);
-                }
-                areaWidth++;
-                x++;
-            }
-        }
-        if (y < 0) {
-            while (y < 0) {
-                ArrayList<Node> row = new ArrayList<>();
-                for (int i = 0; i < areaWidth; i++) {
-                    Node newNode = new Node(i, 0);
-                    Node nextNode = playField.get(0).get(i); // get the next node in the column
-                    newNode.connect(nextNode); // connect the new node to the next node
-                    row.add(newNode);
-                }
-                playField.add(0, row);
-                areaHeight++;
-                y++;
-            }
-        }
-        while (x >= areaWidth) {
-            for (int i = 0; i < playField.size(); i++) {
-                Node newNode = new Node(areaWidth, i);
-                Node prevNode = playField.get(i).get(areaWidth - 1); // get the previous node in the row
-                prevNode.connect(newNode); // connect the previous node to the new node
-                playField.get(i).add(newNode);
-            }
-            areaWidth++;
-        }
-        while (y >= areaHeight) {
-            ArrayList<Node> row = new ArrayList<>();
-            for (int i = 0; i < areaWidth; i++) {
-                Node newNode = new Node(i, areaHeight);
-                Node prevNode = playField.get(areaHeight - 1).get(i); // get the previous node in the column
-                prevNode.connect(newNode); // connect the previous node to the new node
-                row.add(newNode);
-            }
-            playField.add(row);
-            areaHeight++;
-        }
-
-        return playField.get(y).get(x);
-    }*/
 
     private class ScheduleTask extends TimerTask {
 

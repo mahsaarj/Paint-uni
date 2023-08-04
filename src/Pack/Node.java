@@ -109,21 +109,4 @@ public class Node {
     public void setColor(Color color) {
         this.color = color;
     }
-
-    public Color getBorderColor() {
-        return borderColor;
-    }
-
-    public void setBorderColor(Color borderColor) {
-        this.borderColor = borderColor;
-    }
-
-    public void draw(Graphics2D g2d, int nodeSize) {
-        int xPos = x * nodeSize;
-        int yPos = y * nodeSize;
-        g2d.setColor(borderColor);
-        g2d.drawRect(xPos, yPos, nodeSize, nodeSize); // draw border
-        g2d.setColor(color);
-        g2d.fillRect(xPos + 1, yPos + 1, nodeSize - 1, nodeSize - 1); // fill with node color
-    }
 }

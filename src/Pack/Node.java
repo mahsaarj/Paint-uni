@@ -12,7 +12,6 @@ public class Node {
     private Color color = Color.white;
     private List<Node> neighbors;
     private List<Node> edges;
-    private Color borderColor; // added field for border color
 
 
     public Node(int x, int y) {
@@ -23,8 +22,6 @@ public class Node {
         this.color = Color.white;
         this.neighbors = new ArrayList<>();
         this.edges = new ArrayList<>();
-        this.owner = null;
-        this.borderColor = Color.BLACK; // set default border color to black
     }
 
     public Color getColor() {

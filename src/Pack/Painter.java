@@ -49,9 +49,9 @@ class Painter{
                 // For all other players than humanPlayer we need to smooth animations regaurding to animation smoothing
                 // of humanPlayer
                 drawX += ((player.getDx() - humanPlayer.getDx()) * size
-                        * ((board.getcheckCounter() + 1) / (double) board.getcheckReset()));
+                        * ((board.getlogicCounter() + 1) / (double) board.getlogicReset()));
                 drawY += ((player.getDy() - humanPlayer.getDy()) * size
-                        * ((board.getcheckCounter() + 1) / (double) board.getcheckReset()));
+                        * ((board.getlogicCounter() + 1) / (double) board.getlogicReset()));
             }
 
             g.setColor(Color.BLACK);
@@ -75,10 +75,10 @@ class Painter{
                 // x and y position relative to humanPlayer at which node should be drawn
                 drawX = (x - humanPlayer.getX()) * size + ((width - size) / 2)
                         + (int) ((-humanPlayer.getDx()) * size *
-                        ((board.getcheckCounter() + 1) / (double) board.getcheckReset()));
+                        ((board.getlogicCounter() + 1) / (double) board.getlogicReset()));
                 drawY = (y - humanPlayer.getY()) * size + ((height - size) / 2)
                         + (int) ((-humanPlayer.getDy()) * size *
-                        ((board.getcheckCounter() + 1) / (double) board.getcheckReset()));
+                        ((board.getlogicCounter() + 1) / (double) board.getlogicReset()));
 
                 // If visible, draw first white background and then draw color on top
                 if (!(drawX + size < 0 || drawX > width || drawY + size < 0 || drawY > height)) {

@@ -4,8 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PaintIo extends JFrame implements ActionListener{
 
@@ -14,10 +12,10 @@ public class PaintIo extends JFrame implements ActionListener{
     private JPanel panel;
 
     private PaintIo(){
-        initUI();
+        initFrame();
     }
 
-    private void initUI(){
+    private void initFrame(){
 
         Dimension screenSize = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds().getSize();
         setSize(screenSize);

@@ -15,7 +15,7 @@ public class SmartBot extends BotPlayer {
         x += dx;
         y += dy;
 
-        // Check for contested nodes owned by other players
+        // logic for contested nodes owned by other players
         ArrayList<Node> contestedNodes = new ArrayList<Node>();
         for (Node node : currentnode.getNeighbors()) {
             if (node.getContestedOwner() != null && node.getContestedOwner() != this) {

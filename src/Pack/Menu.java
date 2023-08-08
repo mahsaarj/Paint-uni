@@ -122,7 +122,7 @@ public class Menu extends JPanel {
         }
 
         // Add the setting labels and spinners
-        JLabel speedLabel = new JLabel("Game speed (1-5):");
+        JLabel speedLabel = new JLabel("Game speed 1-5 :");
         SpeedSpnr = new JSpinner(new SpinnerNumberModel(3, 1, 5, 1));
         JLabel botNumberLabel = new JLabel("Number of bots:");
         botSpnr = new JSpinner(new SpinnerNumberModel(10, 0, 25, 1));
